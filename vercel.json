@@ -1,0 +1,27 @@
+﻿{
+  "rewrites": [
+    {
+      "source": "/auth",
+      "destination": "/api/auth"
+    },
+    {
+      "source": "/callback",
+      "destination": "/api/callback"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/callback",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "unsafe-none"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ]
+}
