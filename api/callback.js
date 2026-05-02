@@ -34,9 +34,13 @@
       return;
     }
 
-    const message = "authorization:github:success:" + JSON.stringify({
+    const messageWithProvider = "authorization:github:success:" + JSON.stringify({
       token: tokenData.access_token,
       provider: "github"
+    });
+
+    const messageTokenOnly = "authorization:github:success:" + JSON.stringify({
+      token: tokenData.access_token
     });
 
     const lt = String.fromCharCode(60);
@@ -50,11 +54,13 @@
       `${lt}title${gt}NADEED OAuth${lt}/title${gt}`,
       `${lt}/head${gt}`,
       `${lt}body${gt}`,
-      `${lt}p id="status"${gt}Authentication completed. Returning to NADEED CMS...${lt}/p${gt}`,
+      `${lt}p id="status"${gt}Authentication completed. Sending login to NADEED CMS...${lt}/p${gt}`,
       `${lt}script${gt}`,
       `(function () {`,
-      `  var message = ${JSON.stringify(message)};`,
+      `  var messageWithProvider = ${JSON.stringify(messageWithProvider)};`,
+      `  var messageTokenOnly = ${JSON.stringify(messageTokenOnly)};`,
       `  var statusEl = document.getElementById("status");`,
+      `  var attempts = 0;`,
       ``,
       `  function setStatus(text) {`,
       `    if (statusEl) {`,
@@ -62,51 +68,37 @@
       `    }`,
       `  }`,
       ``,
-      `  function sendMessage(origin) {`,
+      `  function sendAll() {`,
       `    if (!window.opener) {`,
       `      setStatus("Authentication completed, but the CMS window was not found. Close this window and open /admin again.");`,
-      `      return false;`,
+      `      return;`,
       `    }`,
       ``,
       `    try {`,
-      `      window.opener.postMessage(message, origin || "*");`,
-      `      return true;`,
+      `      window.opener.postMessage(messageWithProvider, "*");`,
+      `      window.opener.postMessage(messageTokenOnly, "*");`,
+      `      window.opener.postMessage("authorizing:github", "*");`,
+      `      setStatus("Authentication sent to NADEED CMS. If the dashboard opens, close this window.");`,
       `    } catch (error) {`,
-      `      try {`,
-      `        window.opener.postMessage(message, "*");`,
-      `        return true;`,
-      `      } catch (innerError) {`,
-      `        return false;`,
-      `      }`,
+      `      setStatus("Authentication completed, but sending the login message failed.");`,
       `    }`,
       `  }`,
       ``,
-      `  window.addEventListener("message", function (event) {`,
-      `    var origin = "*";`,
-      `    if (event) {`,
-      `      if (event.origin) {`,
-      `        origin = event.origin;`,
-      `      }`,
+      `  function loop() {`,
+      `    attempts = attempts + 1;`,
+      `    sendAll();`,
+      `    if (attempts < 30) {`,
+      `      setTimeout(loop, 300);`,
+      `    } else {`,
+      `      setStatus("Authentication was sent. If NADEED CMS did not open, close this window and try Login again.");`,
       `    }`,
-      `    sendMessage(origin);`,
-      `    setStatus("Authentication sent to NADEED CMS. Closing...");`,
-      `    setTimeout(function () { window.close(); }, 800);`,
+      `  }`,
+      ``,
+      `  window.addEventListener("message", function () {`,
+      `    sendAll();`,
       `  }, false);`,
       ``,
-      `  if (window.opener) {`,
-      `    window.opener.postMessage("authorizing:github", "*");`,
-      `    setStatus("Authentication completed. Waiting for NADEED CMS...");`,
-      `  } else {`,
-      `    setStatus("Authentication completed, but this window was not opened by NADEED CMS.");`,
-      `  }`,
-      ``,
-      `  setTimeout(function () {`,
-      `    sendMessage("*");`,
-      `  }, 1000);`,
-      ``,
-      `  setTimeout(function () {`,
-      `    sendMessage("*");`,
-      `  }, 2000);`,
+      `  loop();`,
       `})();`,
       `${lt}/script${gt}`,
       `${lt}/body${gt}`,
@@ -121,4 +113,3 @@
     res.status(500).send("OAuth callback error: " + error.message);
   }
 }
-
