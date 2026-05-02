@@ -111,7 +111,7 @@
       `${lt}/script${gt}`,
       `${lt}/body${gt}`,
       `${lt}/html${gt}`
-    ].join("\\n");
+    ].join("\n");
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
@@ -121,3 +121,4 @@
     res.status(500).send("OAuth callback error: " + error.message);
   }
 }
+
