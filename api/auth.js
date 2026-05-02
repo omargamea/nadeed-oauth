@@ -22,7 +22,7 @@
 
   const params = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: `${origin}/callback`,
+    redirect_uri: `${origin}/api/callback`,
     scope: "repo,user",
     state
   });
